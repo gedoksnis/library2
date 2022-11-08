@@ -4,7 +4,7 @@ from . models import Genre, Book, BookInstance, Author
 # Register your models here.
 
 class BookInstanceAdmin(admin.ModelAdmin):
-    list_display = ('book', 'status', 'due_back')
+    list_display = ('book', 'status', 'reader', 'due_back', 'id')
     # pridėti redaguotinus laukus
     list_filter = ('status', 'due_back')
     list_editable = ('due_back', 'status')
@@ -12,8 +12,8 @@ class BookInstanceAdmin(admin.ModelAdmin):
     search_fields = ('id', 'book__title')
 
     fieldsets = (
-        ('General', {'fields': ('id', 'book')}),
-        ('Availability', {'fields': ('status', 'due_back')}),
+        (None, {'fields': ('id', 'book')}),
+        ('Availability', {'fields': ('status', 'due_back', 'reader')}),
     )
 
 class BooksInstanceInline(admin.TabularInline):

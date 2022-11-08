@@ -1,8 +1,8 @@
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse
 from django.views import generic
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .models import Book, BookInstance, Author, Genre
 
@@ -53,6 +53,7 @@ class BookListView(generic.ListView):
     model = Book
     template_name = 'library/book_list.html'
     context_object_name = 'my_book_list'
+    paginate_by = 2
 
 
 class BookDetailView(generic.DetailView):
@@ -77,3 +78,9 @@ def search(request):
     search_results = Book.objects.filter(Q(title__icontains=query) | Q(summary__icontains = query))
     return render(request, 'library/search.html', {'books': search_results, 'query': query})
 
+class LoanBooksListView(LoginRequiredMixin, generic.ListView):
+    model = BookInstance
+    template_name = 'library/user_books.html'
+
+    def get_queryset(self):
+        return BookInstance.objects.filter(reader=self.request.user).filter(status__exact='p').order_by('due_back')
