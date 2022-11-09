@@ -1,10 +1,14 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, reverse, redirect
 from django.views import generic
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
-
-from .models import Book, BookInstance, Author, Genre
+from django.views.generic.edit import FormMixin
+from .forms import BookReviewForm
+from .models import Book, BookInstance, Author
+from django.contrib.auth.forms import User
+from django.views.decorators.csrf import csrf_protect
+from django.contrib import messages
 
 # Create your views here.
 
@@ -56,9 +60,31 @@ class BookListView(generic.ListView):
     paginate_by = 2
 
 
-class BookDetailView(generic.DetailView):
+class BookDetailView(FormMixin, generic.DetailView):
     model = Book
     template_name = 'library/book_detail.html'
+    form_class = BookReviewForm
+
+    class Meta:
+        ordering = ['title']
+
+    def get_success_url(self):
+        return reverse('book_detail', kwargs={'pk': self.object.id})
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def form_valid(self, form):
+        form.instance.book = self.object
+        form.instance.reviewer = self.request.user
+        form.save()
+        return super(BookDetailView, self).form_valid(form)
+
 
 def author(request, author_id):
     single_author = get_object_or_404(Author, pk=author_id)
@@ -84,3 +110,28 @@ class LoanBooksListView(LoginRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         return BookInstance.objects.filter(reader=self.request.user).filter(status__exact='p').order_by('due_back')
+
+
+@csrf_protect
+def register(request):
+    if request.method == 'POST':
+        #pasiimti duomenis iš formos
+        username = request.POST['username']
+        email = request.POST ['email']
+        password = request.POST['password']
+        password2 = request.POST['password2']
+        if password == password2:
+            if User.objects.filter(username=username).exists():
+                messages.error(request, f'Vartotojas {username} jau užimtas!')
+                return redirect('register')
+            else:
+                if User.objects.filter(email=email).exists():
+                    messages.error(request, f'Vartotojas su el.paštu {email} jau egizstuoja!')
+                    return redirect('register')
+                else:
+                    User.objects.create_user(username=username, email=email, password=password)
+                    return render(request, 'library/welcome.html')
+        else:
+            messages.error(request, 'Slaptažodžiai nesutampa!')
+            return redirect('register')
+    return render(request, 'library/register.html')

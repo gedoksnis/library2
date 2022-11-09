@@ -18,4 +18,30 @@
     <p><strong>Id: </strong> {{copy.id}}</p>
     {% endfor %}
 </div>
+
+{% if user.is_authenticated %}
+<div class="fieldWrapper">
+    <br><hr>
+    <h4>Palikite atsiliepimą čia:</h4>
+    <form action="" method="post">
+        {% csrf_token %}
+        {{form.content}}
+        <input type="submit" value="Išsaugoti">
+    </form>
+</div>
+{% endif %}
+
+<div>
+    <h4>Atsiliepimai</h4>
+    {% if book.bookreview_set.all %}
+    {%  for review in book.bookreview_set.all  %}
+    <hr>
+    <strong>{{review.reviewer}}</strong>, <em>{{review.date_created}}</em>
+    <p>{{review.content}}</p>
+    {% endfor %}
+    {% else %}
+    <p>Knyga atsiliepimų neturi.</p>
+    {% endif %}
+</div>
+
 {% endblock %}
