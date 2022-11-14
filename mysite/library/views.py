@@ -4,11 +4,12 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.edit import FormMixin
-from .forms import BookReviewForm
+from .forms import BookReviewForm, UserUpdateForm, ProfilisUpdateForm
 from .models import Book, BookInstance, Author
 from django.contrib.auth.forms import User
 from django.views.decorators.csrf import csrf_protect
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 
@@ -88,9 +89,6 @@ class BookDetailView(FormMixin, generic.DetailView):
 
 def author(request, author_id):
     single_author = get_object_or_404(Author, pk=author_id)
-    # author = {
-    #     'author':single_author
-    # }
     return render(request, 'library/author.html', {'author': single_author})
 
 def search(request):
@@ -135,3 +133,24 @@ def register(request):
             messages.error(request, 'Slaptažodžiai nesutampa!')
             return redirect('register')
     return render(request, 'library/register.html')
+
+
+@login_required
+def profilis(request):
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfilisUpdateForm(request.POST, request.FILES, instance=request.user.profilis)
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            messages.success(request, f'Profilis atnaujintas')
+            return redirect('profile')
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfilisUpdateForm(instance=request.user.profilis)
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form
+    }
+    return render(request, 'library/profilis.html', context)
