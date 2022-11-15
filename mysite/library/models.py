@@ -110,3 +110,4 @@ class Profilis(models.Model):
             img.thumbnail(output_size)
             img.save(self.nuotrauka.path)
 
+#
