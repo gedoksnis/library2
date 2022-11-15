@@ -75,7 +75,7 @@ class Author(models.Model):
 
     def get_absolute_url(self):
         """Nurodo konkretaus autoriaus galutinį adresą"""
-        return reverse('author-detail', args=[str(self.id)])
+        return reverse('author', args=[str(self.id)])
 
     def __str__(self):
         return f'{self.last_name} {self.first_name}'
